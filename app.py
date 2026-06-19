@@ -4,7 +4,8 @@ app.py
 Sentiment-Aware News Summarizer — Gen Z Edition
 Themes: Neon Dark, Soft Pastel, Vaporwave, Clean Light, Matcha
 Features: Theme picker, copy button, article history, word count,
-          reading time, sentiment chart, entity tags, mobile responsive
+          reading time, sentiment chart, entity tags
+          Responsive: wide on desktop, stacked on mobile
 """
 
 import streamlit as st
@@ -19,7 +20,7 @@ from src.ner        import extract_entities
 st.set_page_config(
     page_title="NewsAI ✨",
     page_icon="📰",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="collapsed"
 )
 
@@ -156,6 +157,20 @@ st.markdown(f"""
     font-family: {T['font']} !important;
 }}
 
+/* ── Responsive container ── */
+.block-container {{
+    max-width: 1200px !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    margin: 0 auto !important;
+}}
+@media (max-width: 768px) {{
+    .block-container {{
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }}
+}}
+
 /* ── Sidebar ── */
 [data-testid="stSidebar"] {{
     background-color: {T['card']} !important;
@@ -165,7 +180,7 @@ st.markdown(f"""
     color: {T['text']} !important;
 }}
 
-/* ── Main text ── */
+/* ── Text ── */
 .stMarkdown p, .stMarkdown li,
 .stMarkdown span, h1, h2, h3, h4 {{
     color: {T['text']} !important;
@@ -210,7 +225,7 @@ st.markdown(f"""
     font-weight: 600;
 }}
 
-/* ── Stats grid — 2x2 mobile, 4x1 desktop ── */
+/* ── Stats — 2x2 mobile, 4x1 desktop ── */
 .stats-grid {{
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -244,7 +259,7 @@ st.markdown(f"""
 
 /* ── Hero ── */
 .hero-title {{
-    font-size: clamp(2rem, 6vw, 3rem);
+    font-size: clamp(2rem, 5vw, 3.2rem);
     font-weight: 800;
     background: linear-gradient(135deg, {T['accent']}, {T['accent2']});
     -webkit-background-clip: text;
@@ -254,7 +269,7 @@ st.markdown(f"""
 }}
 .hero-sub {{
     color: {T['subtext']} !important;
-    font-size: clamp(0.9rem, 3vw, 1.1rem);
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
     margin-top: 8px;
 }}
 
@@ -317,7 +332,6 @@ st.markdown(f"""
     border: none !important;
     border-radius: 12px !important;
     font-weight: 600 !important;
-    width: 100% !important;
     padding: 12px !important;
     font-size: 1rem !important;
     transition: opacity 0.2s !important;
@@ -384,13 +398,20 @@ st.markdown("---")
 
 # ── URL Input ─────────────────────────────────────────────────────────────────
 prefill = st.session_state.get("prefill_url", "")
-url = st.text_input(
-    "🔗 Paste your news URL",
-    value=prefill,
-    placeholder="https://www.dawn.com/news/...",
-    label_visibility="collapsed"
-)
-analyze_btn = st.button("✨ Analyze Article", type="primary", use_container_width=True)
+col_input, col_btn = st.columns([5, 1])
+with col_input:
+    url = st.text_input(
+        "🔗 Paste your news URL",
+        value=prefill,
+        placeholder="https://www.dawn.com/news/...",
+        label_visibility="collapsed"
+    )
+with col_btn:
+    analyze_btn = st.button(
+        "✨ Analyze",
+        type="primary",
+        use_container_width=True
+    )
 
 if "prefill_url" in st.session_state:
     del st.session_state.prefill_url
@@ -439,7 +460,7 @@ if analyze_btn:
         "confidence": sentiment_result["confidence"],
     })
 
-    # ── Stats ─────────────────────────────────────────────────────────────────
+    # ── Stats — 2x2 mobile, 4x1 desktop ──────────────────────────────────────
     st.markdown("### 📊 Quick Stats")
     st.markdown(f"""
     <div class="stats-grid">
@@ -462,76 +483,83 @@ if analyze_btn:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Summary ───────────────────────────────────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Summary + Sentiment — side by side desktop, stacked mobile ────────────
     summary_text = summary_result["summary"] if summary_result else text
-    st.markdown("### ✍️ AI Summary")
-    st.markdown(f"""
-    <div class="news-card">
-        <p style="line-height:1.8; font-size:1rem; color:{T['text']};">
-            {summary_text}
-        </p>
-        <div style="color:{T['subtext']}; font-size:0.78rem; margin-top:12px;">
-            📉 {summary_result['input_chars']} → {summary_result['output_chars']} chars
+    left, right  = st.columns([3, 2])
+
+    with left:
+        st.markdown("### ✍️ AI Summary")
+        st.markdown(f"""
+        <div class="news-card">
+            <p style="line-height:1.8; font-size:1rem; color:{T['text']};">
+                {summary_text}
+            </p>
+            <div style="color:{T['subtext']}; font-size:0.78rem; margin-top:12px;">
+                📉 {summary_result['input_chars']} → {summary_result['output_chars']} chars
+            </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
-    st.markdown(
-        f"<span style='color:{T['text']}; font-weight:600;'>📋 Copy Summary</span>",
-        unsafe_allow_html=True
-    )
-    st.text_area(
-        label="copy",
-        value=summary_text,
-        height=100,
-        label_visibility="collapsed",
-        key="copy_summary"
-    )
-    st.caption("👆 Click inside → Ctrl+A → Ctrl+C to copy!")
-
-    # ── Sentiment ─────────────────────────────────────────────────────────────
-    st.markdown("### 💬 Sentiment Analysis")
-    label       = sentiment_result["label"]
-    confidence  = sentiment_result["confidence"]
-    pos_score   = sentiment_result["scores"]["Positive"]
-    neg_score   = sentiment_result["scores"]["Negative"]
-    badge_class = "sentiment-positive" if label == "Positive" else "sentiment-negative"
-    emoji       = "😊" if label == "Positive" else "😟"
-
-    st.markdown(f"""
-    <div class="news-card" style="text-align:center;">
-        <div style="font-size:2.5rem;">{emoji}</div>
-        <div class="{badge_class}" style="margin-top:8px;">{label}</div>
-        <div class="confidence-text">{confidence*100:.1f}% confident fr fr</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    fig = go.Figure(go.Pie(
-        labels=["Positive", "Negative"],
-        values=[pos_score, neg_score],
-        hole=0.65,
-        marker=dict(
-            colors=[T["positive"], T["negative"]],
-            line=dict(color=T["bg"], width=2)
-        ),
-        textinfo="none",
-        hovertemplate="%{label}: %{value:.1%}<extra></extra>"
-    ))
-    fig.update_layout(
-        showlegend=True,
-        height=200,
-        margin=dict(t=8, b=8, l=8, r=8),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color=T["text"]),
-        legend=dict(
-            font=dict(color=T["text"]),
-            bgcolor="rgba(0,0,0,0)"
+        st.markdown(
+            f"<span style='color:{T['text']}; font-weight:600;'>📋 Copy Summary</span>",
+            unsafe_allow_html=True
         )
-    )
-    st.plotly_chart(fig, use_container_width=True)
+        st.text_area(
+            label="copy",
+            value=summary_text,
+            height=100,
+            label_visibility="collapsed",
+            key="copy_summary"
+        )
+        st.caption("👆 Click inside → Ctrl+A → Ctrl+C to copy!")
 
-    # ── Named Entities ────────────────────────────────────────────────────────
+    with right:
+        st.markdown("### 💬 Sentiment Analysis")
+        label       = sentiment_result["label"]
+        confidence  = sentiment_result["confidence"]
+        pos_score   = sentiment_result["scores"]["Positive"]
+        neg_score   = sentiment_result["scores"]["Negative"]
+        badge_class = "sentiment-positive" if label == "Positive" else "sentiment-negative"
+        emoji       = "😊" if label == "Positive" else "😟"
+
+        st.markdown(f"""
+        <div class="news-card" style="text-align:center;">
+            <div style="font-size:2.5rem;">{emoji}</div>
+            <div class="{badge_class}" style="margin-top:8px;">{label}</div>
+            <div class="confidence-text">{confidence*100:.1f}% confident fr fr</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        fig = go.Figure(go.Pie(
+            labels=["Positive", "Negative"],
+            values=[pos_score, neg_score],
+            hole=0.65,
+            marker=dict(
+                colors=[T["positive"], T["negative"]],
+                line=dict(color=T["bg"], width=2)
+            ),
+            textinfo="none",
+            hovertemplate="%{label}: %{value:.1%}<extra></extra>"
+        ))
+        fig.update_layout(
+            showlegend=True,
+            height=220,
+            margin=dict(t=8, b=8, l=8, r=8),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color=T["text"]),
+            legend=dict(
+                font=dict(color=T["text"]),
+                bgcolor="rgba(0,0,0,0)"
+            )
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Named Entities — 2x2 mobile, 4x1 desktop ─────────────────────────────
     st.markdown("### 🏷️ Named Entities")
 
     def make_tags(items):
@@ -563,13 +591,18 @@ if analyze_btn:
     </div>
     """, unsafe_allow_html=True)
 
+    st.markdown("<br>", unsafe_allow_html=True)
+
     # ── Expandable sections ───────────────────────────────────────────────────
     with st.expander("📄 Article Metadata"):
-        st.markdown(f"**🖊️ Authors:** {', '.join(article['authors']) if article['authors'] else 'Not found'}")
-        st.markdown(f"**📅 Date:** {article['publish_date'] or 'Not found'}")
-        st.markdown(f"**🔧 Method:** {article['method']}")
-        st.markdown(f"**📏 Length:** {len(text)} characters")
-        st.markdown(f"**🔗 URL:** {url}")
+        mc1, mc2 = st.columns(2)
+        with mc1:
+            st.markdown(f"**🖊️ Authors:** {', '.join(article['authors']) if article['authors'] else 'Not found'}")
+            st.markdown(f"**📅 Date:** {article['publish_date'] or 'Not found'}")
+            st.markdown(f"**🔧 Method:** {article['method']}")
+        with mc2:
+            st.markdown(f"**📏 Length:** {len(text)} characters")
+            st.markdown(f"**🔗 URL:** {url}")
 
     with st.expander("📖 Full Article Text"):
         st.markdown(f"""
@@ -582,13 +615,13 @@ if analyze_btn:
 # ── Empty state ───────────────────────────────────────────────────────────────
 else:
     st.markdown(f"""
-    <div style="text-align:center; padding:3rem 1rem;">
-        <div style="font-size:3.5rem;">📰</div>
-        <div style="font-size:1.2rem; margin-top:1rem; color:{T['text']};">
+    <div style="text-align:center; padding:4rem 1rem;">
+        <div style="font-size:4rem;">📰</div>
+        <div style="font-size:1.3rem; margin-top:1rem; color:{T['text']};">
             Paste a news URL above and hit
             <span style="color:{T['accent']}; font-weight:700;"> ✨ Analyze</span>
         </div>
-        <div style="font-size:0.85rem; margin-top:0.5rem; color:{T['subtext']};">
+        <div style="font-size:0.9rem; margin-top:0.5rem; color:{T['subtext']};">
             Works with BBC, Dawn, Reuters, TechCrunch, Guardian and more
         </div>
     </div>
