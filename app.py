@@ -8,7 +8,6 @@ Features: Theme picker, one-click copy, article history with auto-analyze,
           responsive: wide on desktop, stacked on mobile
 """
 
-import json
 import streamlit as st
 import time
 import plotly.graph_objects as go
@@ -491,39 +490,12 @@ if analyze_btn:
 
     with left:
         st.markdown("### ✍️ AI Summary")
-        safe_summary = json.dumps(summary_text)
         st.markdown(f"""
         <div class="news-card">
-            <div style="display:flex; justify-content:space-between; 
-                        align-items:flex-start; margin-bottom:12px;">
-                <div style="color:{T['accent']}; font-weight:700; 
+            <div style="display:flex; justify-content:space-between;
+                        align-items:center; margin-bottom:12px;">
+                <div style="color:{T['accent']}; font-weight:700;
                             font-size:1.05rem;">AI Summary</div>
-                <button
-                    onclick="navigator.clipboard.writeText({safe_summary}).then(() => {{
-                        this.innerText = '✅ Copied!';
-                        this.style.background = '#22c55e';
-                        setTimeout(() => {{
-                            this.innerText = '📋 Copy';
-                            this.style.background = 'linear-gradient(135deg, {T['accent']}, {T['accent2']})';
-                        }}, 2000);
-                    }})"
-                    style="
-                        background: linear-gradient(135deg, {T['accent']}, {T['accent2']});
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        padding: 6px 14px;
-                        font-size: 0.82rem;
-                        font-weight: 600;
-                        cursor: pointer;
-                        white-space: nowrap;
-                        transition: opacity 0.2s;
-                    "
-                    onmouseover="this.style.opacity='0.85'"
-                    onmouseout="this.style.opacity='1'"
-                >
-                    📋 Copy
-                </button>
             </div>
             <p style="line-height:1.8; font-size:1rem; color:{T['text']};">
                 {summary_text}
@@ -533,6 +505,45 @@ if analyze_btn:
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+        # ── Copy button via component ─────────────────────────────────────────
+        import streamlit.components.v1 as components
+        escaped = summary_text.replace("\\", "\\\\").replace("`", "\\`")
+        components.html(f"""
+        <button
+            id="copybtn"
+            onclick="
+                var el = document.createElement('textarea');
+                el.value = `{escaped}`;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                document.getElementById('copybtn').innerText = '✅ Copied!';
+                document.getElementById('copybtn').style.background = '#22c55e';
+                setTimeout(function() {{
+                    document.getElementById('copybtn').innerText = '📋 Copy Summary';
+                    document.getElementById('copybtn').style.background = 'linear-gradient(135deg, {T['accent']}, {T['accent2']})';
+                }}, 2000);
+            "
+            style="
+                background: linear-gradient(135deg, {T['accent']}, {T['accent2']});
+                color: white;
+                border: none;
+                border-radius: 12px;
+                padding: 10px 20px;
+                font-size: 0.95rem;
+                font-weight: 600;
+                cursor: pointer;
+                width: 100%;
+                transition: opacity 0.2s;
+                font-family: {T['font']};
+            "
+            onmouseover="this.style.opacity='0.85'"
+            onmouseout="this.style.opacity='1'"
+        >📋 Copy Summary</button>
+        """, height=55)
+
 
     with right:
         st.markdown("### 💬 Sentiment Analysis")
