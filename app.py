@@ -3,11 +3,12 @@ app.py
 ------
 Sentiment-Aware News Summarizer — Gen Z Edition
 Themes: Neon Dark, Soft Pastel, Vaporwave, Clean Light, Matcha
-Features: Theme picker, copy button, article history, word count,
-          reading time, sentiment chart, entity tags
-          Responsive: wide on desktop, stacked on mobile
+Features: Theme picker, one-click copy, article history with auto-analyze,
+          word count, reading time, sentiment chart, entity tags,
+          responsive: wide on desktop, stacked on mobile
 """
 
+import json
 import streamlit as st
 import time
 import plotly.graph_objects as go
@@ -107,6 +108,8 @@ if "history" not in st.session_state:
     st.session_state.history = []
 if "theme" not in st.session_state:
     st.session_state.theme = "🌙 Neon Dark"
+if "auto_analyze" not in st.session_state:
+    st.session_state.auto_analyze = False
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -132,7 +135,8 @@ with st.sidebar:
                 key=f"hist_{i}",
                 use_container_width=True
             ):
-                st.session_state.prefill_url = h["url"]
+                st.session_state.prefill_url  = h["url"]
+                st.session_state.auto_analyze = True
                 st.rerun()
         if st.button("🗑️ Clear History", use_container_width=True):
             st.session_state.history = []
@@ -350,15 +354,6 @@ st.markdown(f"""
     padding: 12px !important;
 }}
 
-/* ── Text area ── */
-.stTextArea textarea {{
-    background: {T['card']} !important;
-    color: {T['text']} !important;
-    border: 1px solid {T['border']} !important;
-    border-radius: 12px !important;
-    font-size: 0.95rem !important;
-}}
-
 /* ── Expander ── */
 [data-testid="stExpander"] {{
     background: {T['card']} !important;
@@ -413,6 +408,11 @@ with col_btn:
         use_container_width=True
     )
 
+# ── Auto analyze when coming from history ─────────────────────────────────────
+if st.session_state.get("auto_analyze") and url:
+    analyze_btn = True
+    st.session_state.auto_analyze = False
+
 if "prefill_url" in st.session_state:
     del st.session_state.prefill_url
 
@@ -460,7 +460,7 @@ if analyze_btn:
         "confidence": sentiment_result["confidence"],
     })
 
-    # ── Stats — 2x2 mobile, 4x1 desktop ──────────────────────────────────────
+    # ── Stats ─────────────────────────────────────────────────────────────────
     st.markdown("### 📊 Quick Stats")
     st.markdown(f"""
     <div class="stats-grid">
@@ -485,7 +485,7 @@ if analyze_btn:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Summary + Sentiment — side by side desktop, stacked mobile ────────────
+    # ── Summary + Sentiment ───────────────────────────────────────────────────
     summary_text = summary_result["summary"] if summary_result else text
     left, right  = st.columns([3, 2])
 
@@ -502,18 +502,37 @@ if analyze_btn:
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown(
-            f"<span style='color:{T['text']}; font-weight:600;'>📋 Copy Summary</span>",
-            unsafe_allow_html=True
-        )
-        st.text_area(
-            label="copy",
-            value=summary_text,
-            height=100,
-            label_visibility="collapsed",
-            key="copy_summary"
-        )
-        st.caption("👆 Click inside → Ctrl+A → Ctrl+C to copy!")
+        # ── One-click copy button ─────────────────────────────────────────────
+        safe_summary = json.dumps(summary_text)
+        st.markdown(f"""
+        <button
+            onclick="navigator.clipboard.writeText({safe_summary}).then(() => {{
+                this.innerText = '✅ Copied!';
+                this.style.background = '#22c55e';
+                setTimeout(() => {{
+                    this.innerText = '📋 Copy Summary';
+                    this.style.background = 'linear-gradient(135deg, {T['accent']}, {T['accent2']})';
+                }}, 2000);
+            }})"
+            style="
+                background: linear-gradient(135deg, {T['accent']}, {T['accent2']});
+                color: white;
+                border: none;
+                border-radius: 12px;
+                padding: 10px 20px;
+                font-size: 0.95rem;
+                font-weight: 600;
+                cursor: pointer;
+                width: 100%;
+                margin-top: 8px;
+                transition: opacity 0.2s;
+            "
+            onmouseover="this.style.opacity='0.85'"
+            onmouseout="this.style.opacity='1'"
+        >
+            📋 Copy Summary
+        </button>
+        """, unsafe_allow_html=True)
 
     with right:
         st.markdown("### 💬 Sentiment Analysis")
@@ -559,7 +578,7 @@ if analyze_btn:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Named Entities — 2x2 mobile, 4x1 desktop ─────────────────────────────
+    # ── Named Entities ────────────────────────────────────────────────────────
     st.markdown("### 🏷️ Named Entities")
 
     def make_tags(items):
