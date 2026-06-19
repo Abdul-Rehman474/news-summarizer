@@ -1,0 +1,19 @@
+# Core NLP
+transformers>=4.40.0
+spacy>=3.8.0
+
+# Scraping
+newspaper3k==0.2.8
+requests>=2.31.0
+beautifulsoup4>=4.12.3
+lxml>=5.2.1
+lxml_html_clean>=0.1.1
+
+# Frontend
+streamlit>=1.33.0
+
+# Utilities
+python-dotenv>=1.0.1
+
+# Testing
+pytest>=8.1.2

@@ -1,0 +1,11 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.vscode/
+.pytest_cache/
+test_url.py
+Thumbs.db
+desktop.ini
