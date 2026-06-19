@@ -1,6 +1,7 @@
 # Core NLP
 transformers>=4.40.0
 spacy>=3.8.0
+torch>=2.0.0
 
 # Scraping
 newspaper3k==0.2.8
@@ -11,6 +12,7 @@ lxml_html_clean>=0.1.1
 
 # Frontend
 streamlit>=1.33.0
+plotly>=5.0.0
 
 # Utilities
 python-dotenv>=1.0.1
