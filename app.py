@@ -491,8 +491,40 @@ if analyze_btn:
 
     with left:
         st.markdown("### ✍️ AI Summary")
+        safe_summary = json.dumps(summary_text)
         st.markdown(f"""
         <div class="news-card">
+            <div style="display:flex; justify-content:space-between; 
+                        align-items:flex-start; margin-bottom:12px;">
+                <div style="color:{T['accent']}; font-weight:700; 
+                            font-size:1.05rem;">AI Summary</div>
+                <button
+                    onclick="navigator.clipboard.writeText({safe_summary}).then(() => {{
+                        this.innerText = '✅ Copied!';
+                        this.style.background = '#22c55e';
+                        setTimeout(() => {{
+                            this.innerText = '📋 Copy';
+                            this.style.background = 'linear-gradient(135deg, {T['accent']}, {T['accent2']})';
+                        }}, 2000);
+                    }})"
+                    style="
+                        background: linear-gradient(135deg, {T['accent']}, {T['accent2']});
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 6px 14px;
+                        font-size: 0.82rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        white-space: nowrap;
+                        transition: opacity 0.2s;
+                    "
+                    onmouseover="this.style.opacity='0.85'"
+                    onmouseout="this.style.opacity='1'"
+                >
+                    📋 Copy
+                </button>
+            </div>
             <p style="line-height:1.8; font-size:1rem; color:{T['text']};">
                 {summary_text}
             </p>
@@ -500,38 +532,6 @@ if analyze_btn:
                 📉 {summary_result['input_chars']} → {summary_result['output_chars']} chars
             </div>
         </div>
-        """, unsafe_allow_html=True)
-
-        # ── One-click copy button ─────────────────────────────────────────────
-        safe_summary = json.dumps(summary_text)
-        st.markdown(f"""
-        <button
-            onclick="navigator.clipboard.writeText({safe_summary}).then(() => {{
-                this.innerText = '✅ Copied!';
-                this.style.background = '#22c55e';
-                setTimeout(() => {{
-                    this.innerText = '📋 Copy Summary';
-                    this.style.background = 'linear-gradient(135deg, {T['accent']}, {T['accent2']})';
-                }}, 2000);
-            }})"
-            style="
-                background: linear-gradient(135deg, {T['accent']}, {T['accent2']});
-                color: white;
-                border: none;
-                border-radius: 12px;
-                padding: 10px 20px;
-                font-size: 0.95rem;
-                font-weight: 600;
-                cursor: pointer;
-                width: 100%;
-                margin-top: 8px;
-                transition: opacity 0.2s;
-            "
-            onmouseover="this.style.opacity='0.85'"
-            onmouseout="this.style.opacity='1'"
-        >
-            📋 Copy Summary
-        </button>
         """, unsafe_allow_html=True)
 
     with right:
